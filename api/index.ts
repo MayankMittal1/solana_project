@@ -9,8 +9,30 @@ import {
   Keypair,
 } from "@solana/web3.js";
 import { config } from "dotenv";
+import * as borsh from 'borsh';
 //
-const result = config();
+
+class IntellectualProperty {
+  property_metadata = "test"
+  token_address = "ZGZCCY2U3AC8WJLGRFR4DFH1VXWRSX2SNT1YU75UX9PHX2S78HMNGCNCO04VHV5D"
+  constructor(fields: {property_metadata: string, token_address: string} | undefined = undefined) {
+    if (fields) {
+      this.property_metadata = fields.property_metadata;
+      this.token_address=fields.token_address
+    }
+  }
+}
+
+const IntellectualPropertySchema = new Map([
+  [IntellectualProperty, {kind: 'struct', fields: [['property_metadata', 'String'],['token_address','String']]}],
+]);
+
+const IntellectualProperty_Size = borsh.serialize(
+  IntellectualPropertySchema,
+  new IntellectualProperty(),
+).length;
+
+
 const program_id = new PublicKey("7ofUaLBHj2QZdzqRuMNcjYFMMCfVgsC4nqCPABibnbbq");
 async function establishConnection() {
   const rpcUrl = "http://localhost:8899";
@@ -19,23 +41,23 @@ async function establishConnection() {
   console.log("Connection to cluster established:", rpcUrl, version);
 }
 
-async function createKeypairFromInput(key:string) :Promise<void> {
+async function createKeypairFromInput(key:string) :Promise<Keypair> {
   const secretKey = Uint8Array.from(JSON.parse(key));
-  const initializerAccount = Keypair.fromSecretKey(secretKey);
+  return Keypair.fromSecretKey(secretKey);
 }
 
 export async function createAccount(privateKeyByteArray:string, seed:string, description:string) {
   const rpcUrl = "http://localhost:8899";
   const connection = new Connection(rpcUrl, "singleGossip");
 
-  createKeypairFromInput(privateKeyByteArray);
+  const initializerAccount = await createKeypairFromInput(privateKeyByteArray);
   const newAccountPubkey = await PublicKey.createWithSeed(
     initializerAccount.publicKey,
     seed,
     program_id
   );
   const lamports = await connection.getMinimumBalanceForRentExemption(
-    5000
+    IntellectualProperty_Size
   );
   const instruction = SystemProgram.createAccountWithSeed({
     fromPubkey: initializerAccount.publicKey,
@@ -43,10 +65,11 @@ export async function createAccount(privateKeyByteArray:string, seed:string, des
     seed: seed,
     newAccountPubkey:newAccountPubkey,
     lamports:lamports,
-    space: 5000,
+    space: IntellectualProperty_Size,
     programId: program_id,
   });
 
+  console.log(IntellectualProperty_Size)
   const transaction = new Transaction().add(instruction);
   await sendAndConfirmTransaction(connection, transaction, [
     initializerAccount,
@@ -58,7 +81,7 @@ export async function createAccount(privateKeyByteArray:string, seed:string, des
       { pubkey: newAccountPubkey, isSigner: false, isWritable: true },
     ],
     data: Buffer.from(
-      Uint8Array.of(0, ...new TextEncoder().encode(description))
+      Uint8Array.of(0, ...Array.from(new TextEncoder().encode(description)))
     ),
   });
 
@@ -71,18 +94,18 @@ export async function createAccount(privateKeyByteArray:string, seed:string, des
   ]);
 }
 
-async function fetch() {
-  const signer = await createKeypairFromFile();
-  const fetch_transaction = new TransactionInstruction({
-    programId: program_id,
-    keys: [{ pubkey: signer.publicKey, isSigner: true, isWritable: false }],
-    data: Buffer.from(Uint8Array.of(2)),
-  });
+// async function fetch() {
+//   const signer = await createKeypairFromFile();
+//   const fetch_transaction = new TransactionInstruction({
+//     programId: program_id,
+//     keys: [{ pubkey: signer.publicKey, isSigner: true, isWritable: false }],
+//     data: Buffer.from(Uint8Array.of(2)),
+//   });
 
-  const transaction = new Transaction().add(fetch_transaction);
+//   const transaction = new Transaction().add(fetch_transaction);
 
-  var a = await sendAndConfirmTransaction(connection, transaction, [signer]);
-}
+//   var a = await sendAndConfirmTransaction(connection, transaction, [signer]);
+// }
 
 // const pri= async function(){
 //   const signer = await createKeypairFromFile();

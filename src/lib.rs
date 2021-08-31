@@ -14,7 +14,6 @@ use solana_program::{
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct IntellectualProperty {
-    pub property_owner: Pubkey,
     pub property_metadata: String,
     pub token_address: String,
 }
@@ -43,8 +42,7 @@ pub fn process_instruction(
           
       if *instruction_byte == 0 {
         let description = String::from_utf8(rest_of_data.to_vec()).unwrap();
-        let mut property_account_data = IntellectualProperty::try_from_slice(&property_owner_account.data.borow())?;
-        property_account_data.property_owner = *property_owner_account.owner;
+        let mut property_account_data = IntellectualProperty::try_from_slice(&property_owner_account.data.borrow())?;
         property_account_data.property_metadata=description;
         property_account_data.serialize(&mut &mut property_owner_account.data.borrow_mut()[..])?;
       }
