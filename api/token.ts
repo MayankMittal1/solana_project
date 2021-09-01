@@ -34,7 +34,7 @@ let mint = await Token.createMint(
     fromWallet,
     fromWallet.publicKey,
     null,
-    9,
+    0,
     splToken.TOKEN_PROGRAM_ID,
 );
 
