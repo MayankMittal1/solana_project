@@ -6,7 +6,7 @@ const usage = function () {
       Create and fetch your Intellectual property
   
       create: create <metadata(hex code of SHA256 of your property)> <seed> <PrivateKeyByteArray> 
-      fetch: fetch existing
+      fetch: fetch <account address> existing
       `;
   console.log(usageText);
 };
