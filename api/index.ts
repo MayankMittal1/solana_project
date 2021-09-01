@@ -10,47 +10,53 @@ import {
 } from "@solana/web3.js";
 import { config } from "dotenv";
 import * as borsh from 'borsh';
+import { error } from "console";
+import { createToken } from "./token";
+
 //
 
-class IntellectualProperty {
-  property_metadata = "test"
-  token_address = "ZGZCCY2U3AC8WJLGRFR4DFH1VXWRSX2SNT1YU75UX9PHX2S78HMNGCNCO04VHV5D"
-  constructor(fields: {property_metadata: string, token_address: string} | undefined = undefined) {
-    if (fields) {
-      this.property_metadata = fields.property_metadata;
-      this.token_address=fields.token_address
-    }
-  }
-}
-
-const IntellectualPropertySchema = new Map([
-  [IntellectualProperty, {kind: 'struct', fields: [['property_metadata', 'String'],['token_address','String']]}],
-]);
-
-const IntellectualProperty_Size = borsh.serialize(
-  IntellectualPropertySchema,
-  new IntellectualProperty(),
-).length;
 
 
 const program_id = new PublicKey("7ofUaLBHj2QZdzqRuMNcjYFMMCfVgsC4nqCPABibnbbq");
-async function establishConnection() {
-  const rpcUrl = "http://localhost:8899";
-  const connection = new Connection(rpcUrl, "confirmed");
-  const version = await connection.getVersion();
-  console.log("Connection to cluster established:", rpcUrl, version);
-}
+// async function establishConnection() {
+//   const rpcUrl = "http://localhost:8899";
+//   const connection = new Connection(rpcUrl, "confirmed");
+//   const version = await connection.getVersion();
+//   console.log("Connection to cluster established:", rpcUrl, version);
+// }
 
 async function createKeypairFromInput(key:string) :Promise<Keypair> {
   const secretKey = Uint8Array.from(JSON.parse(key));
   return Keypair.fromSecretKey(secretKey);
 }
 
-export async function createAccount(privateKeyByteArray:string, seed:string, description:string) {
-  const rpcUrl = "http://localhost:8899";
-  const connection = new Connection(rpcUrl, "singleGossip");
-
+export async function createAccount(privateKeyByteArray:string, seed:string, metadata:string) {
   const initializerAccount = await createKeypairFromInput(privateKeyByteArray);
+  const address= await createToken(initializerAccount)
+  class IntellectualProperty {
+    property_metadata = metadata
+    token_address = address
+    constructor(fields: {property_metadata: string, token_address: string} | undefined = undefined) {
+      if (fields) {
+        this.property_metadata = fields.property_metadata;
+        this.token_address=fields.token_address
+      }
+    }
+  }
+  
+  
+  const IntellectualPropertySchema = new Map([
+    [IntellectualProperty, {kind: 'struct', fields: [['property_metadata', 'string'],['token_address','string']]}],
+  ]);
+  
+  const IntellectualProperty_Size = borsh.serialize(
+    IntellectualPropertySchema,
+    new IntellectualProperty(),
+  ).length;
+
+  const rpcUrl = "http://localhost:8899";
+  const connection = new Connection(rpcUrl, "confirmed");
+
   const newAccountPubkey = await PublicKey.createWithSeed(
     initializerAccount.publicKey,
     seed,
@@ -69,7 +75,6 @@ export async function createAccount(privateKeyByteArray:string, seed:string, des
     programId: program_id,
   });
 
-  console.log(IntellectualProperty_Size)
   const transaction = new Transaction().add(instruction);
   await sendAndConfirmTransaction(connection, transaction, [
     initializerAccount,
@@ -81,7 +86,7 @@ export async function createAccount(privateKeyByteArray:string, seed:string, des
       { pubkey: newAccountPubkey, isSigner: false, isWritable: true },
     ],
     data: Buffer.from(
-      Uint8Array.of(0, ...Array.from(new TextEncoder().encode(description)))
+      Uint8Array.of(0,...Array.from(new TextEncoder().encode(metadata+address)))
     ),
   });
 
@@ -92,23 +97,38 @@ export async function createAccount(privateKeyByteArray:string, seed:string, des
   await sendAndConfirmTransaction(connection, transaction2, [
     initializerAccount,
   ]);
+
+  return newAccountPubkey.toBase58()
+
 }
-
-// async function fetch() {
-//   const signer = await createKeypairFromFile();
-//   const fetch_transaction = new TransactionInstruction({
-//     programId: program_id,
-//     keys: [{ pubkey: signer.publicKey, isSigner: true, isWritable: false }],
-//     data: Buffer.from(Uint8Array.of(2)),
-//   });
-
-//   const transaction = new Transaction().add(fetch_transaction);
-
-//   var a = await sendAndConfirmTransaction(connection, transaction, [signer]);
-// }
-
-// const pri= async function(){
-//   const signer = await createKeypairFromFile();
-//   console.log(signer.publicKey.toBase58())
-// }
-// pri()
+//fetch account
+export async function fetch(key:string) {
+  class IntellectualProperty {
+    property_metadata = ""
+    token_address = ""
+    constructor(fields: {property_metadata: string, token_address: string} | undefined = undefined) {
+      if (fields) {
+        this.property_metadata = fields.property_metadata;
+        this.token_address=fields.token_address
+      }
+    }
+  }
+  
+  const IntellectualPropertySchema = new Map([
+    [IntellectualProperty, {kind: 'struct', fields: [['property_metadata', 'string'],['token_address','string']]}],
+  ]);
+  
+  const rpcUrl = "http://localhost:8899";
+  const connection = new Connection(rpcUrl, "singleGossip");
+  var greetedPubkey = new PublicKey(key)
+  const accountInfo = await connection.getAccountInfo(greetedPubkey);
+  if (accountInfo === null) {
+    return Error
+  }
+  const property = borsh.deserialize(
+    IntellectualPropertySchema,
+    IntellectualProperty,
+    accountInfo.data,
+  );
+  return property
+  }
