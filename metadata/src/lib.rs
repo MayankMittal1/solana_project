@@ -17,10 +17,10 @@ use solana_program::{
 pub struct IntellectualProperty {
     pub property_owner: String,
     pub hash: String,
-    pub value: u64,
+    pub value: String,
     pub uri: String,
-    pub is_public: bool,
-    pub for_sale: bool,
+    pub is_public: String,
+    pub for_sale: String,
 }
 
 entrypoint!(process_instruction);
