@@ -19,6 +19,8 @@ pub struct IntellectualProperty {
     pub hash: String,
     pub value: u64,
     pub uri: String,
+    pub is_public: bool,
+    pub for_sale: bool,
 }
 
 entrypoint!(process_instruction);
@@ -66,6 +68,8 @@ pub fn process_instruction(
 
         nft_account_data.value=0;
         nft_account_data.uri="".to_string();
+        nft_account_data.is_public = false;
+        nft_account_data.for_sale = false;
         nft_account_data
             .serialize(&mut &mut nft_account.data.borrow_mut()[..])
             .map_err(|err| {
@@ -84,6 +88,32 @@ pub fn process_instruction(
         //decode hash from byte array and store it
         let uri = String::from_utf8(rest_of_data[..].to_vec()).unwrap();
         nft_account_data.uri = uri;
+        nft_account_data.is_public = true;
+        
+        nft_account_data
+            .serialize(&mut &mut nft_account.data.borrow_mut()[..])
+            .map_err(|err| {
+                msg!("Receiving message as string utf8 failed, {:?}", err);
+                ProgramError::InvalidInstructionData
+            })?;
+    }
+    if *instruction_byte == 2 {
+        //creates editable class of Intellectual property
+        let mut nft_account_data: IntellectualProperty =
+            try_from_slice_unchecked(&nft_account.data.borrow()).map_err(|err| {
+                msg!("Receiving message as string utf8 failed, {:?}", err);
+                ProgramError::InvalidInstructionData
+            })?;
+
+        //Marking for sale if already made private
+        if nft_account_data.is_public == true
+        {
+            nft_account_data.for_sale = true;
+        }
+        else
+        {
+            msg!("The Token is not publicly revealed yet.");
+        }
         
         nft_account_data
             .serialize(&mut &mut nft_account.data.borrow_mut()[..])
