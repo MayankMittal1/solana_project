@@ -122,5 +122,24 @@ pub fn process_instruction(
                 ProgramError::InvalidInstructionData
             })?;
     }
+    if *instruction_byte == 3 {
+        //creates editable class of Intellectual property
+        let mut nft_account_data: IntellectualProperty =
+            try_from_slice_unchecked(&nft_account.data.borrow()).map_err(|err| {
+                msg!("Receiving message as string utf8 failed, {:?}", err);
+                ProgramError::InvalidInstructionData
+            })?;
+
+        //Assign a new owner when sale is confirmed
+        let owner = String::from_utf8(rest_of_data[..].to_vec()).unwrap();
+        nft_account_data.property_owner = owner;
+        
+        nft_account_data
+            .serialize(&mut &mut nft_account.data.borrow_mut()[..])
+            .map_err(|err| {
+                msg!("Receiving message as string utf8 failed, {:?}", err);
+                ProgramError::InvalidInstructionData
+            })?;
+    }
     Ok(())
 }
