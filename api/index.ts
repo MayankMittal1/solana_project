@@ -69,12 +69,16 @@ export async function createAccount(privateKeyByteArray: string, seed: string, h
     hash = hash
     amount = 100000
     uri = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
-    constructor(fields: { property_owner: string, hash: string, amount: number, uri: string } | undefined = undefined) {
+    is_public = false
+    for_sale = false
+    constructor(fields: { property_owner: string, hash: string, amount: number, uri: string, is_public:boolean, for_sale:boolean } | undefined = undefined) {
       if (fields) {
         this.property_owner = fields.property_owner;
         this.hash = fields.hash;
         this.amount = fields.amount;
         this.uri = fields.uri
+        this.for_sale=fields.for_sale
+        this.is_public=fields.is_public
       }
     }
   }
@@ -83,7 +87,6 @@ export async function createAccount(privateKeyByteArray: string, seed: string, h
   const IntellectualPropertySchema = new Map([
     [IntellectualProperty, { kind: 'struct', fields: [['property_owner', 'string'], ['hash', 'string'], ['amount', 'u64'], ['uri', 'string']] }],
   ]);
-  console.log(IntellectualPropertySchema)
 
   const IntellectualProperty_Size = borsh.serialize(
     IntellectualPropertySchema,
@@ -216,5 +219,5 @@ export async function fetch(key: string) {
   //     Uint8Array.of(0,...Array.from(new TextEncoder().encode(cleanString(new TextDecoder().decode(accountInfo.data)))))
   //   )
   // );
-  return refineData(new TextDecoder().decode(accountInfo.data))
+  return new TextDecoder().decode(accountInfo.data)
 }
