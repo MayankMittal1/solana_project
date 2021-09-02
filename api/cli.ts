@@ -1,5 +1,5 @@
 const args = process.argv
-import { createAccount, fetch, goPublic } from "./index";
+import { createAccount, fetch, goPublic,forSale } from "./index";
 
 const usage = function () {
   const usageText = `
@@ -10,7 +10,7 @@ const usage = function () {
       `;
   console.log(usageText);
 };
-const commands = ["create", "fetch", "goPublic"];
+const commands = ["create", "fetch", "goPublic","forSale"];
 if (commands.indexOf(args[2]) == -1) {
   console.log("invalid command passed");
   usage();
@@ -29,11 +29,20 @@ else if (commands.indexOf(args[2]) == 1) {
     fetchAccount(account)
   }
 }
+else if (commands.indexOf(args[2]) == 3) {
+  if (args.length == 6) {
+    console.log("yes")
+    var key = args[3];
+    var privateKeyByteArray=args[4]
+    var amount = args[5]
+    forSale(key,privateKeyByteArray,amount)
+  }
+}
 else if (commands.indexOf(args[2]) == 2) {
   if (args.length == 5) {
     var seed = args[3];
     var privateKeyByteArray=args[4]
-    goPublic(privateKeyByteArray,seed)
+    goPublic(privateKeyByteArray,seed,"egyrft")
   }
 }
 else {
