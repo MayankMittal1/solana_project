@@ -51,6 +51,7 @@ async function getTime(key:PublicKey) {
         'confirmed',
       );
     var a = await connection.getSignaturesForAddress(key)
+    a=a.reverse()
     const milliseconds = a[0].blockTime * 1000 
 
     return new Date(milliseconds)
